@@ -17,4 +17,4 @@ jobs:
     - name: Build the Docker image
       run: docker build . --file Dockerfile --tag foam-language-server:$(date +%s)
     - name: Push the Docker image to Hub
-      run: docker login -u foamscience -p ${DOCKER_TOKEN} && docker push -a
+      run: docker login -u foamscience -p ${{secrets.DOCKER_TOKEN}} && docker push -a
