@@ -23,7 +23,7 @@ call plug#begin('~/.local/share/nvim/plugged')
 	" Text subjects with OpenFOAM support
 	Plug 'RRethy/nvim-treesitter-textsubjects'
 	" Context display
-	Plug 'FoamScience/nvim-treesitter-context'
+	Plug 'romgrk/nvim-treesitter-context'
 
 	" 2. LSP stuff
 	
