@@ -5,17 +5,17 @@
 "
 " Plugins
 call plug#begin('~/.local/share/nvim/plugged')
-    " 0. Not strictly needed preparations
-    Plug 'folke/tokyonight.nvim'
+    	" 0. Not strictly needed preparations
+    	Plug 'folke/tokyonight.nvim'
 
-	" 1. Tree-Sitter stuff
+    	" 1. Tree-Sitter stuff
 
-	" Tree-Sitter with OpenFOAM support
-    Plug 'FoamScience/nvim-treesitter', {'do': ':TSUpdate'}
+    	" Tree-Sitter with OpenFOAM support
+    	Plug 'FoamScience/nvim-treesitter', {'do': ':TSUpdate'}
 	" Text objects for TreeSitter with OpenFOAM support
 	Plug 'FoamScience/nvim-treesitter-textobjects'
 	" Text subjects with OpenFOAM support
-	Plug 'FoamScience/nvim-treesitter-textsubjects'
+	Plug 'RRethy/nvim-treesitter-textsubjects'
 	" Context display
 	Plug 'FoamScience/nvim-treesitter-context'
 
