@@ -6,34 +6,54 @@
 " Plugins
 call plug#begin('~/.local/share/nvim/plugged')
     " 0. Not strictly needed preparations
+    Plug 'nvim-lua/plenary.nvim'
     Plug 'folke/tokyonight.nvim'
+	Plug 'nvim-treesitter/playground'
+    Plug 'karb94/neoscroll.nvim'
+    Plug 'junegunn/fzf'
+    Plug 'junegunn/fzf.vim' " for preview support
+    Plug 'nvim-telescope/telescope.nvim'
 
 	" 1. Tree-Sitter stuff
 
 	" Tree-Sitter with OpenFOAM support
-    Plug 'FoamScience/nvim-treesitter', {'do': ':TSUpdate'}
+    Plug 'nvim-treesitter/nvim-treesitter', {'do': ':TSUpdate'}
 	" Text objects for TreeSitter with OpenFOAM support
-	Plug 'FoamScience/nvim-treesitter-textobjects'
+	Plug 'nvim-treesitter/nvim-treesitter-textobjects'
 	" Text subjects with OpenFOAM support
-	Plug 'FoamScience/nvim-treesitter-textsubjects'
+	Plug 'RRethy/nvim-treesitter-textsubjects'
 	" Context display
 	Plug 'FoamScience/nvim-treesitter-context'
 
 	" 2. LSP stuff
 	
 	" Interface to the native LSP client with OpenFOAM support
-	Plug 'FoamScience/nvim-lspconfig'
+    Plug 'FoamScience/nvim-lspconfig', { 'branch': 'foam' }
 	" Helper plugin to install language servers
-	Plug 'FoamScience/nvim-lsp-installer'
+    Plug 'FoamScience/nvim-lsp-installer', { 'branch': 'foam' }
+    " Auto-Complete plugins with snippets (or you can just attach to built-in omnifunc)
+    Plug 'hrsh7th/nvim-cmp'
+    Plug 'hrsh7th/cmp-nvim-lsp'
+    Plug 'L3MON4D3/LuaSnip'
 call plug#end()
 
 " Sane defaults
+set number
 set tabstop=4                                                                                                                 
 set shiftwidth=4                                                                                                              
 colorscheme tokyonight
+let g:root_patterns=['compile_commands.json', 'Make', '.git', 'Makefile', 'package.json', 'system']
+
 
 " Plugins scripting via Lua
 lua <<EOF
+
+-- Better scrolling
+require('neoscroll').setup({
+    -- All these keys will be mapped to their corresponding default scrolling animation
+    mappings = {'<C-u>', '<C-d>', '<C-b>', '<C-f>',
+                '<C-y>', '<C-e>', 'zt', 'zz', 'zb'},
+})
 
 -- Configuration for Tree-Sitter
 -- Note that, for this to work, the filetype must be detected correctly
@@ -144,6 +164,13 @@ require("treesitter-context").setup({
 -- I recommend using lsp_installer instead
 local lsp_installer = require("nvim-lsp-installer")
 
+-- First things first, can't stand default error signs
+local signs = { Error = " ", Warn = " ", Hint = " ", Info = " " }
+for type, icon in pairs(signs) do
+  local hl = "DiagnosticSign" .. type
+  vim.fn.sign_define(hl, { text = icon, texthl = hl, numhl = hl })
+end
+
 -- Use an on_attach function to only map the following keys
 -- after the language server attaches to the current buffer
 local on_attach = function(client, bufnr)
@@ -170,7 +197,14 @@ local on_attach = function(client, bufnr)
   buf_set_keymap('n', '<space>e', '<cmd>lua vim.diagnostic.open_float()<CR>', opts)
   buf_set_keymap('n', '[d', '<cmd>lua vim.diagnostic.goto_prev()<CR>', opts)
   buf_set_keymap('n', ']d', '<cmd>lua vim.diagnostic.goto_next()<CR>', opts)
-  buf_set_keymap('n', '<space>q', '<cmd>lua vim.diagnostic.setloclist()<CR>', opts)
+  buf_set_keymap('n', '<space>dd', '<cmd>lua vim.diagnostic.setloclist()<CR>', opts)
+  -- These keymaps are better accessed through telescope with fuzzy searching:
+  --buf_set_keymap('n', '<space>ls', '<cmd>lua vim.lsp.buf.document_symbol()<CR>', opts)
+  buf_set_keymap('n', '<space>ls', '<cmd>Telescope lsp_document_symbols<CR>', opts)
+  --buf_set_keymap('n', '<space>ls', '<cmd>lua vim.lsp.buf.workspace_symbol()<CR>', opts)
+  buf_set_keymap('n', '<space>lS', '<cmd>Telescope lsp_workspace_symbols<CR>', opts)
+  --buf_set_keymap('n', '<space>wd', '<cmd>lua vim.diagnostic.setqflist()<CR>', opts)
+  buf_set_keymap('n', '<space>wd', '<cmd>Telescope diagnostics<CR>', opts)
 
 end
 
@@ -205,6 +239,51 @@ lsp_installer.on_server_ready(function(server)
   }
   server:setup(opts)
 end)
+
+-- nvim-cmp setup
+local luasnip = require 'luasnip'
+local cmp = require 'cmp'
+cmp.setup {
+    snippet = {
+        expand = function(args)
+            require('luasnip').lsp_expand(args.body)
+        end,
+    },--call ddc#custom#patch_global('sourceOptions', {'_': {'matchers': ['matcher_head'], 'sorters': ['sorter_rank']},})
+
+    mapping = {
+        ['<C-p>'] = cmp.mapping.select_prev_item(),
+        ['<C-n>'] = cmp.mapping.select_next_item(),
+        ['<C-d>'] = cmp.mapping.scroll_docs(-4),
+        ['<C-f>'] = cmp.mapping.scroll_docs(4),
+        ['<C-Space>'] = cmp.mapping.complete(),
+        ['<C-e>'] = cmp.mapping.close(),
+        ['<CR>'] = cmp.mapping.confirm {
+            behavior = cmp.ConfirmBehavior.Replace,
+            select = true,
+        },
+        ['<Tab>'] = function(fallback)
+            if cmp.visible() then
+              cmp.select_next_item()
+            elseif luasnip.expand_or_jumpable() then
+              luasnip.expand_or_jump()
+            else
+              fallback()
+            end
+        end,
+        ['<S-Tab>'] = function(fallback)
+            if cmp.visible() then
+              cmp.select_prev_item()
+            elseif luasnip.jumpable(-1) then
+              luasnip.jump(-1)
+            else
+              fallback()
+            end
+        end,
+    },
+    sources = {
+        { name = 'nvim_lsp' },
+    },
+}
 
 EOF
 
