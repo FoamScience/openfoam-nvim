@@ -248,8 +248,7 @@ cmp.setup {
         expand = function(args)
             require('luasnip').lsp_expand(args.body)
         end,
-    },--call ddc#custom#patch_global('sourceOptions', {'_': {'matchers': ['matcher_head'], 'sorters': ['sorter_rank']},})
-
+    },
     mapping = {
         ['<C-p>'] = cmp.mapping.select_prev_item(),
         ['<C-n>'] = cmp.mapping.select_next_item(),
@@ -288,8 +287,10 @@ cmp.setup {
 EOF
 
 " AutoCmds
-"augroup foam
-"	au FileType foam set foldmethod=expr
-"	au FileType foam set foldexpr=nvim_treesitter#foldexpr()
-"augroup END
+augroup foam
+	au FileType foam set foldmethod=expr
+	au FileType foam set foldexpr=nvim_treesitter#foldexpr()
+    " Only fold more than 15 lines
+    au FileType foam set foldminlines=15
+augroup END
 set termguicolors
