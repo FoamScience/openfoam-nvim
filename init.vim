@@ -28,9 +28,9 @@ call plug#begin('~/.local/share/nvim/plugged')
 	" 2. LSP stuff
 	
 	" Interface to the native LSP client with OpenFOAM support
-    Plug 'FoamScience/nvim-lspconfig', { 'branch': 'foam' }
+    Plug 'neovim/nvim-lspconfig'
 	" Helper plugin to install language servers
-    Plug 'FoamScience/nvim-lsp-installer', { 'branch': 'foam' }
+    Plug 'williamboman/nvim-lsp-installer'
     " Auto-Complete plugins with snippets (or you can just attach to built-in omnifunc)
     Plug 'hrsh7th/nvim-cmp'
     Plug 'hrsh7th/cmp-nvim-lsp'
@@ -220,7 +220,7 @@ lsp_installer.settings({
 })
 
 -- Make sure these servers are installed
-local servers = { 'foam' }
+local servers = { 'foam_ls' }
 for _, name in pairs(servers) do
   local server_is_found, server = lsp_installer.get_server(name)
   if server_is_found then
